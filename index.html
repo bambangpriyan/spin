@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glassmorphic Custom Roulette</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Theme Variables */
+    :root {
+      --bg-gradient-start: #1e3c72;
+      --bg-gradient-end: #2a5298;
+      --glass-bg: rgba(255, 255, 255, 0.12);
+      --glass-border: rgba(255, 255, 255, 0.25);
+      --text-color: #ffffff;
+      --accent-color: rgba(255, 255, 255, 0.6);
+      --input-bg: rgba(255, 255, 255, 0.15);
+      --input-focus: rgba(255, 255, 255, 0.3);
+      --btn-bg: rgba(255, 255, 255, 0.2);
+      --btn-hover: rgba(255, 255, 255, 0.35);
+      --transition: 0.3s;
+    }
+
+    /* Global styles */
+    * {
+      box-sizing: border-box;
+      transition: all var(--transition) ease;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      font-family: 'Poppins', sans-serif;
+      color: var(--text-color);
+      overflow: hidden;
+    }
+
+    .glass {
+      background: var(--glass-bg);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      padding: 32px;
+      max-width: 420px;
+      width: 90%;
+      position: relative;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.75rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Option Inputs */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .options input {
+      padding: 10px 14px;
+      background: var(--input-bg);
+      border: none;
+      border-radius: 12px;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+    .options input:hover,
+    .options input:focus {
+      background: var(--input-focus);
+      transform: scale(1.02);
+    }
+
+    /* Buttons */
+    .buttons {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--btn-bg);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--text-color);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:hover {
+      background: var(--btn-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+    .icon {
+      width: 20px;
+      height: 20px;
+      fill: var(--text-color);
+    }
+
+    /* Page Layout */
+    .page { display: none; flex-direction: column; align-items: center; width: 100%; }
+    .page.active { display: flex; }
+
+    /* Wheel */
+    #wheelContainer {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin-bottom: 20px;
+    }
+    #wheelContainer::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 340px; height: 340px;
+      border: 2px dashed var(--accent-color);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    #wheelCanvas {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 8px rgba(0,0,0,0.25));
+    }
+    .center-deco {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90px; height: 90px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    .center-deco svg { width: 40px; height: 40px; fill: var(--accent-color); }
+    @keyframes pulse {
+      0%,100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      backdrop-filter: blur(8px);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: var(--glass-bg);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      padding: 32px;
+      text-align: center;
+      max-width: 80%;
+      color: var(--text-color);
+    }
+    .modal-content p {
+      margin: 0 0 20px;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    .close-btn {
+      background: var(--btn-bg);
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all var(--transition) ease;
+    }
+    .close-btn:hover { background: var(--btn-hover); }
+  </style>
+</head>
+<body>
+  <div id="page-form" class="page active glass">
+    <h1>Custom Roulette</h1>
+    <div class="options" id="options-container">
+      <input type="text" placeholder="Option 1">
+      <input type="text" placeholder="Option 2">
+    </div>
+    <div class="buttons">
+      <button class="btn" id="add-option-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>Add Option</button>
+      <button class="btn" id="done-btn">Done</button>
+    </div>
+  </div>
+
+  <div id="page-result" class="page glass">
+    <h1>Result</h1>
+    <div id="wheelContainer">
+      <canvas id="wheelCanvas" width="320" height="320"></canvas>
+      <div class="center-deco">
+        <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="btn" id="spin-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Spin</button>
+      <button class="btn" id="back-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    </div>
+    <div id="resultText"></div>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modal-text"></p>
+      <button class="close-btn" id="close-modal">Close</button>
+    </div>
+  </div>
+
+  <!-- Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+  <script>
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    const optionsContainer = document.getElementById('options-container');
+    function focusNextInput(current) {
+      const inputs = Array.from(optionsContainer.querySelectorAll('input'));
+      const idx = inputs.indexOf(current);
+      if (idx >= 0 && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+      } else if (idx === inputs.length - 1) {
+        addOptionField();
+      }
+    }
+    function addOptionField() {
+      const count = optionsContainer.querySelectorAll('input').length + 1;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = `Option ${count}`;
+      input.addEventListener('keydown', onOptionKeydown);
+      optionsContainer.appendChild(input);
+      input.focus();
+    }
+    function onOptionKeydown(e) { if (e.key === 'Enter') { e.preventDefault(); focusNextInput(e.target); } }
+    document.getElementById('add-option-btn').addEventListener('click', addOptionField);
+
+    let wheelData = [], spinAngleStart = 0, spinTime = 0, spinTimeTotal = 0, currentAngle = 0;
+    let ctx, canvas;
+
+    function easeOut(t, b, c, d) {
+      const ts = (t /= d) * t;
+      const tc = ts * t;
+      return b + c * (tc - 3 * ts + 3 * t);
+    }
+
+    function drawWheel(angle) {
+      const outside = 140, textR = 120, inside = 60;
+      const len = wheelData.length;
+      const arc = 2 * Math.PI / len;
+      const colors = wheelData.map((_, i) => `hsl(${i * 360 / len}, 70%, 60%)`);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(canvas.width/2, canvas.height/2);
+      ctx.rotate(angle * Math.PI/180);
+      wheelData.forEach((item, i) => {
+        const start = arc * i;
+        ctx.fillStyle = colors[i];
+        ctx.beginPath();
+        ctx.arc(0, 0, outside, start, start + arc);
+        ctx.arc(0, 0, inside, start + arc, start, true);
+        ctx.fill();
+
+        ctx.save();
+        ctx.fillStyle = '#fff';
+        ctx.translate(Math.cos(start + arc/2) * textR, Math.sin(start + arc/2) * textR);
+        ctx.rotate(start + arc/2 + Math.PI/2);
+        ctx.fillText(item, -ctx.measureText(item).width/2, 0);
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+
+    function spin() {
+      spinTime += 30;
+      if (spinTime >= spinTimeTotal) { stopRotateWheel(); return; }
+      const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+      currentAngle = spinAngle;
+      drawWheel(currentAngle);
+      requestAnimationFrame(spin);
+    }
+
+    function stopRotateWheel() {
+      const finalAngle = spinAngleStart - easeOut(spinTimeTotal, 0, spinAngleStart, spinTimeTotal);
+      const degrees = finalAngle % 360;
+      const arrowAlignedDegrees = (degrees + 90) % 360;
+      const arc = 360 / wheelData.length;
+      const index = Math.floor(arrowAlignedDegrees / arc);
+      const result = wheelData[index];
+      document.getElementById('modal-text').textContent = `Result is ${result}`;
+      document.getElementById('modal').style.display = 'flex';
+      confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+    }
+
+    document.getElementById('done-btn').addEventListener('click', () => {
+      const opts = Array.from(optionsContainer.querySelectorAll('input')).map(i => i.value.trim()).filter(v => v);
+      if (opts.length < 2) { alert('Please enter at least two options.'); return; }
+      wheelData = opts;
+      showPage('page-result');
+      canvas = document.getElementById('wheelCanvas'); ctx = canvas.getContext('2d');
+      drawWheel(0);
+    });
+
+    document.getElementById('spin-btn').addEventListener('click', () => {
+      currentAngle = 0;
+      spinAngleStart = Math.random() * 360 + 720;
+      spinTime = 0;
+      spinTimeTotal = Math.random() * 3000 + 4000;
+      spin();
+    });
+
+    document.getElementById('back-btn').addEventListener('click', () => { showPage('page-form'); });
+    document.getElementById('close-modal').addEventListener('click', () => { document.getElementById('modal').style.display = 'none'; });
+    window.addEventListener('click', e => { if (e.target === document.getElementById('modal')) { document.getElementById('modal').style.display = 'none'; } });
+    document.querySelectorAll('#options-container input').forEach(i => i.addEventListener('keydown', onOptionKeydown));
+  </script>
+</body>
+</html>
